@@ -1,0 +1,20 @@
+{
+    "PatientID" : "",
+    "PatientName" : "",
+    "StudyID" : "",
+    "SeriesNumber" : "1",
+    "AccessionNumber" : "123456789",
+    "Manufacturer" : "",
+    "FocusMethod" : "AUTO",
+    "ExtendedDepthOfField" : "NO",
+    "SpecimenDescriptionSequence" : [
+        {
+            "SpecimenIdentifier" : "Specimen^Identifier",
+            "SpecimenUID" : "1.2.276.0.7230010.3.1.4.3252829876.4112.1426166133.871",
+            "IssuerOfTheSpecimenIdentifierSequence" : [
+            ],
+            "SpecimenPreparationSequence" : [
+            ]
+        }
+    ]
+}
