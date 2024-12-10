@@ -5,23 +5,16 @@
   "StudyID" : "NONE",
   "SeriesNumber" : "1",
   "AccessionNumber" : "123456789",
-  "Manufacturer" : "MyManufacturer",
-  "ManufacturerModelName" : "MyModel",
-  "DeviceSerialNumber" : "MySerialNumber",
-  "SoftwareVersions" : "MyVersion",
-
-  "ImageType" : "DERIVED\\PRIMARY\\VOLUME\\NONE",
+  "Manufacturer" : "",
+"ImageType" : "DERIVED\\PRIMARY\\VOLUME\\NONE",
   "FocusMethod" : "AUTO",
   "ExtendedDepthOfField" : "NO",
-
   "SpecimenDescriptionSequence" : [
     {
       "SpecimenIdentifier" : "Specimen^Identifier",
       "SpecimenUID" : "1.2.276.0.7230010.3.1.4.3252829876.4112.1426166133.871",
-      "IssuerOfTheSpecimenIdentifierSequence" : [
-      ],
-      "SpecimenPreparationSequence" : [
-      ]
+      "IssuerOfTheSpecimenIdentifierSequence" : [],
+      "SpecimenPreparationSequence" : []
     }
   ]
 }

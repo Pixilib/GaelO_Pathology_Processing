@@ -1,0 +1,1 @@
+from .welcome_view import WelcomeView
