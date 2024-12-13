@@ -1,12 +1,14 @@
 from pathlib import Path
 import shutil
+from django.http import FileResponse
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import tempfile
 import zipfile
 import os
-from gaelo_pathology_processing.services.file_helper import move_to_storage, get_hash
+from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash
+from gaelo_pathology_processing.services.utils import find_wsi_file
 
 class WsiView(APIView):
     """
@@ -32,11 +34,10 @@ class WsiView(APIView):
             for file_path in extract_dir.iterdir():
                 if file_path.is_file():
                     file_hash = get_hash(file_path)
-                    file_name = f"{file_hash}{file_path.suffix}"
-                    move_to_storage('wsi', str(file_path), file_name)
-                    files.append(file_name)
+                    move_to_storage('wsi', str(file_path), file_hash)
+                    files.append(file_hash)
 
-            os.remove(temp_zip_path)
+          
             shutil.rmtree(extract_dir)
 
             return Response({
@@ -46,4 +47,19 @@ class WsiView(APIView):
 
         except Exception as e:
             return Response({'error': f'{str(e)}'}, status=500)
+        
+    
+    def get(self, request : Request, id : str):
+        try:
+            wsi_file_path = find_wsi_file(id)
+            file = get_file('wsi', wsi_file_path )
+            response = FileResponse(file, as_attachment=True)
+            response['Content-Disposition'] = f'attachment; filename="{
+                id}.zip"'
+            response['Content-Type'] = 'application/zip'
+
+            return response
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
 

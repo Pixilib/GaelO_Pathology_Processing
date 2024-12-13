@@ -9,8 +9,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 from gaelo_pathology_processing.services.file_helper import get_path, list_files, move_to_storage
-from gaelo_pathology_processing.services.utils import body_to_dict
-
+from gaelo_pathology_processing.services.utils import body_to_dict, find_wsi_file
+from pydicom.uid import generate_uid
 
 class ConvertToDicomView(APIView):
 
@@ -20,82 +20,125 @@ class ConvertToDicomView(APIView):
         """
         try:
             data = body_to_dict(request.body)
-            wsi_id = data.get('wsi_id')
-            dicom_tags = data.get('dicom_tags')
+            requested_dicom_tags = data.get('dicom_tags_study')
+            patient_id = requested_dicom_tags.get('PatientID')
+            patient_name = requested_dicom_tags.get('PatientName')
 
-            if not wsi_id:
-                return Response({"error": "The WSI image ID is required."}, status=400)
+            slides = data.get('slides', [])
 
-            if not dicom_tags:
-                return Response({"error": "Dicom tags are required."})
+            if not slides or not all('wsi_id' in slide for slide in slides):
+                return Response({"error": "Each slide must contain a 'wsi_id'."}, status=400)
+
+            if not requested_dicom_tags:
+                return Response({"error": "Dicom tags are required."}, status=400)
+
+            if not patient_id:
+                return Response({"error": "Patient ID is required." }, status=400)
+            
+            if not patient_name:
+                return Response({"error": "Patient name is required."}, status=400)
+            
 
             # Image data required to read the dicom in the OHIF viewer
-            image_type = data.get('dicom_tags', {}).get('ImageType', [])
-            image_type_values = image_type.split('\\')
-            if not image_type or len(image_type_values) < 2:
+            image_type = data.get('dicom_tags_study', {}).get(
+                'ImageType', ['ORIGINAL', 'SECONDARY'])
+            if not image_type or len(image_type) < 2:
                 return Response({"error": "The typical image must contain at least two values ​​(Pixel Data and Examination Characteristics)"}, status=400)
 
-            valid_values_value1 = ['ORIGINAL', 'DERIVED']
-            valid_values_value2 = ['PRIMARY', 'SECONDARY']
-            if image_type_values[0] not in valid_values_value1:
-                return Response({"error": "The first value of ImageType must be 'ORIGINAL' or 'DERIVED'"}, status=400)
-
-            if image_type_values[1] not in valid_values_value2:
-                return Response({"error": "The second value of ImageType must be 'PRIMARY' or 'SECONDARY'"}, status=400)
-
             # initialization of the dataset
-            dataset_path = './storage/wsi/dataset.json'
-            with open(dataset_path, 'w') as json_file:
-                json.dump(dicom_tags, json_file, indent=2)
+            dicom_tags = initialize_dicom_tags(data)
+            results = []
+            for slide in slides:
+                wsi_id = slide['wsi_id']
+                wsi_path = find_wsi_file(wsi_id)
+                if not wsi_path:
+                    return Response({"error": f"WSI file with ID '{wsi_id}' does not exist."}, status=404)
 
-            with open(dataset_path, 'r') as json_file:
-                json_content = json.load(json_file)
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    dataset_path = Path(temp_dir)/ 'dataset.json'
+                    with open(dataset_path, 'w') as json_file:
+                        json.dump(dicom_tags, json_file, indent=2)
 
-            wsi_path = find_wsi_file(wsi_id)
-            if not wsi_path:
-                return Response({"error": f"WSI file with ID '{wsi_id}' does not exist."}, status=404)
+                    output_dir = Path(temp_dir) / 'dicoms'
+                    output_dir.mkdir(parents=True, exist_ok=True)
 
-            with tempfile.TemporaryDirectory() as temp_dir:
-                base_output_dir = Path(temp_dir) / 'dicoms'
-                base_output_dir.mkdir(parents=True, exist_ok=True)
+                    # conversion to DICOM
+                    result = convert_to_dicom(
+                        wsi_path, output_dir, wsi_id, dataset_path)
 
-                # conversion to DICOM
-                result = convert_to_dicom(
-                    wsi_path, base_output_dir, wsi_id, dataset_path)
+                    # zip of DICOM folder
+                    zip_file_name = f"{wsi_id}.zip"
+                    zip_temp_path = Path(temp_dir) / zip_file_name
+                    zip_dicom(result, zip_temp_path)
 
-                # zip of DICOM folder
-                zip_file_name = f"{wsi_id}.zip"
-                zip_temp_path = Path(temp_dir) / zip_file_name
-                zip_dicom(result, zip_temp_path)
-
-                # move zip into storage
-                move_to_storage('dicoms', zip_temp_path, zip_file_name)
-
-                return Response({"message": "Conversion successful and DICOM folder moved on storage !", "dataset": json_content}, status=200)
+                    # move zip into storage
+                    move_to_storage('dicoms', zip_temp_path, zip_file_name)
+                    results.append({"slide_id": wsi_id, "status": "success"})
+                    print(results)
+            return Response({"message": "Conversion successful and DICOM folder moved on storage !", "dataset": json.dumps(dicom_tags)}, status=200)
 
         except json.JSONDecodeError:
             return Response({"error": "Invalid JSON."}, status=400)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+def initialize_dicom_tags(data):
+    """Initialize the DICOM tags dataset."""
+    return {
+        "PatientID": data['dicom_tags_study']['PatientID'],
+        "PatientName": data['dicom_tags_study']['PatientName'],
+        "StudyInstanceUID": generate_uid(),
+        "StudyDescription": data['dicom_tags_study']['StudyDescription'],
+        "AccessionNumber": data.get('dicom_tags_study', {}).get('AccessionNumber', "GaelO"),
+        "SeriesInstanceUID": generate_uid(),
+        "SeriesDescription": data['slides'][0]['dicom_tags_series']["SeriesDescription"],
+        "StudyID": data['dicom_tags_study']['StudyID'],
+        "SeriesNumber": data.get('dicom_tags_study', {}).get('SeriesNumber', 1),
+        "Manufacturer": data.get('dicom_tags_study', {}).get('Manufacturer', ""),
+        "ImageType": data['dicom_tags_study']['ImageType'],
+        "FocusMethod": data.get('dicom_tags_study', {}).get('FocusMethod', "AUTO"),
+        "ExtendedDepthOfField": data.get('dicom_tags_study', {}).get('ExtendedDepthOfField', "NO"),
+        "SpecimenDescriptionSequence": [
+            {
+                "SpecimenIdentifier": "Specimen^Identifier",
+                "SpecimenUID": "1.2.276.0.7230010.3.1.4.3252829876.4112.1426166133.871",
+                "IssuerOfTheSpecimenIdentifierSequence": [],
+                "SpecimenPreparationSequence": []
+            }
+        ]
+    }
 
-def find_wsi_file(wsi_id: str):
-    """
-    Search for a wsi file by its ID in the storage and return its path
-
-    Args:
-        wsi_id (str): wsi image id
-    Returns:
-        str: path of file found
-    """
-    dirs, files = list_files('wsi', '')
-    for filename in files:
-        if os.path.splitext(filename)[0] == wsi_id:
-            return get_path('wsi', filename)
-    return None
 
 
-def zip_dicom(folder_path : str, zip_path : str):
+
+
+
+
+
+
+
+
+
+
+
+
+# def find_wsi_file(wsi_id: str):
+#     """
+#     Search for a wsi file by its ID in the storage and return its path
+
+#     Args:
+#         wsi_id (str): wsi image id
+#     Returns:
+#         str: path of file found
+#     """
+#     dirs, files = list_files('wsi', '')
+#     for filename in files:
+#         if os.path.splitext(filename)[0] == wsi_id:
+#             return get_path('wsi', filename)
+#     return None
+
+
+def zip_dicom(folder_path: str, zip_path: str):
     """
     Creates a ZIP file containing all the contents of the specified folder.
 
@@ -134,12 +177,12 @@ def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset
 
     # Commande OrthancWSIDicomizer
     command = [
-        executable_path,
+        str(executable_path),
         "--openslide=libopenslide-1.dll",
-        image_path,
-        "--dataset="+dataset_path,
+        str(image_path),
+        "--dataset="+str(dataset_path),
         "--folder",
-        output_dir
+        str(output_dir)
     ]
 
     try:
