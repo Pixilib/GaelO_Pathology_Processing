@@ -9,7 +9,6 @@ class TestDicom(TestCase):
         
         pass
 
-    @unittest.skip('skip')
     def test_get_zip_dicom(self):
         """Testing the GET request to retrieve a DICOM image as a zip"""
 

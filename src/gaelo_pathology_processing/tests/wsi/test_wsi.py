@@ -3,7 +3,6 @@ import os
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 import unittest
 class TestWsi(TestCase):
-    @unittest.skip('skip')
     def test_post_wsi(self):
         """Testing the POST request to retrieve a wsi image"""
 
