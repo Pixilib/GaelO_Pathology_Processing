@@ -1,5 +1,5 @@
 from django.test import TestCase
-import os
+import os, base64
 
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 
@@ -7,6 +7,8 @@ from gaelo_pathology_processing.services.file_helper import move_to_storage
 class TestConvertToDicom(TestCase):
 
     def setUp(self):
+        credentials = base64.b64encode(b'GaelO:GaelO')
+        self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials.decode('utf-8')
         self.valid_payload = {
             "dicom_tags_study": {
                 "PatientID": "123456",
