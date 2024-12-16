@@ -1,5 +1,4 @@
-import json
-import os
+import json, os
 
 from gaelo_pathology_processing.services.file_helper import get_path, list_files
 

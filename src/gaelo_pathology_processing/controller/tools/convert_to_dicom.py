@@ -1,16 +1,15 @@
+import json, subprocess, os, tempfile, zipfile
+from pathlib import Path
+
 from rest_framework.request import Request
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-import json
-import subprocess
-import os
-import tempfile
-import zipfile
-from pathlib import Path
+from pydicom.uid import generate_uid
+
 from gaelo_pathology_processing.services.file_helper import get_path, list_files, move_to_storage
 from gaelo_pathology_processing.services.utils import body_to_dict, find_wsi_file
-from pydicom.uid import generate_uid
+
 
 class ConvertToDicomView(APIView):
 
@@ -107,20 +106,6 @@ def initialize_dicom_tags(data):
             }
         ]
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # def find_wsi_file(wsi_id: str):
 #     """
