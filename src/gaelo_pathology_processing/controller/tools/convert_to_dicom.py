@@ -173,7 +173,7 @@ def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset
     output_dir = Path(base_output_dir) / wsi_id
     os.makedirs(output_dir, exist_ok=True)
     executable_path = os.path.join(os.path.dirname(
-        __file__), '..', '..', '..', '..', 'OrthancWSIDicomizer-2.1.exe')
+        __file__), '..', '..', '..', '..', 'OrthancWSIDicomizer')
 
     # Commande OrthancWSIDicomizer
     command = [
