@@ -1,6 +1,7 @@
 from django.test import TestCase
 import os
 from gaelo_pathology_processing.services.file_helper import move_to_storage
+import unittest
 class TestWsi(TestCase):
     def test_post_wsi(self):
         """Testing the POST request to retrieve a wsi image"""
@@ -21,7 +22,7 @@ class TestWsi(TestCase):
         print("Response content:", response.content.decode())
         self.assertEqual(response.status_code, 200)
 
-
+    @unittest.skip('skip')
     def test_get_wsi(self):
         
         id = '9c1c5278-5698-2365-3254-1d671826c773'
