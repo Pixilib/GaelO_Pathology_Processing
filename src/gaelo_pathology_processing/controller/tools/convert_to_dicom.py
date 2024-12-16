@@ -1,16 +1,15 @@
+import json, subprocess, os, tempfile, zipfile
+from pathlib import Path
+
 from rest_framework.request import Request
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-import json
-import subprocess
-import os
-import tempfile
-import zipfile
-from pathlib import Path
+from pydicom.uid import generate_uid
+
 from gaelo_pathology_processing.services.file_helper import get_path, list_files, move_to_storage
 from gaelo_pathology_processing.services.utils import body_to_dict, find_wsi_file
-from pydicom.uid import generate_uid
+
 
 class ConvertToDicomView(APIView):
 
@@ -108,20 +107,6 @@ def initialize_dicom_tags(data):
         ]
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # def find_wsi_file(wsi_id: str):
 #     """
 #     Search for a wsi file by its ID in the storage and return its path
@@ -173,7 +158,7 @@ def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset
     output_dir = Path(base_output_dir) / wsi_id
     os.makedirs(output_dir, exist_ok=True)
     executable_path = os.path.join(os.path.dirname(
-        __file__), '..', '..', '..', '..', 'OrthancWSIDicomizer-2.1.exe')
+        __file__), '..', '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
 
     # Commande OrthancWSIDicomizer
     command = [

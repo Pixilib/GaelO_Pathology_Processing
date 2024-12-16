@@ -1,7 +1,8 @@
 from rest_framework.request import Request
 from rest_framework.response import Response
-from django.http import FileResponse, HttpResponse
 from rest_framework.views import APIView
+from django.http import FileResponse, HttpResponse
+
 from gaelo_pathology_processing.services.file_helper import get_file
 
 

@@ -1,12 +1,11 @@
 from pathlib import Path
-import shutil
+import shutil, tempfile, zipfile
+
 from django.http import FileResponse
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import tempfile
-import zipfile
-import os
+
 from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash
 from gaelo_pathology_processing.services.utils import find_wsi_file
 

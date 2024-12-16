@@ -1,7 +1,8 @@
 import hashlib
+from typing import IO
+
 from django.core.files.storage import storages, Storage
 from django.core.files.base import ContentFile
-from typing import IO
 
 
 def get_hash(path_to_tmp: str) -> str:
