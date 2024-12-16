@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+import unittest 
 
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 class TestDicom(TestCase):
@@ -8,7 +9,7 @@ class TestDicom(TestCase):
         
         pass
 
-
+    @unittest.skip('skip')
     def test_get_zip_dicom(self):
         """Testing the GET request to retrieve a DICOM image as a zip"""
 

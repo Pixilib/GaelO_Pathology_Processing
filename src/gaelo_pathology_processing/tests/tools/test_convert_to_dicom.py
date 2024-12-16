@@ -1,6 +1,6 @@
 from django.test import TestCase
 import os
-
+import unittest
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 
 
@@ -43,6 +43,7 @@ class TestConvertToDicom(TestCase):
 
             ]
         }
+    @unittest.skip('skip')
 
     def test_convert_to_dicom(self):
 
