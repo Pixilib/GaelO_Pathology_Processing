@@ -48,6 +48,4 @@ jobs:
           context: .
           push: true
           pull: true
-          secrets: |
-            "github_token=${{ secrets.TOKEN }}"
           tags: ${{ steps.meta.outputs.tags }}
