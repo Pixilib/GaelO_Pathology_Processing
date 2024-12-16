@@ -32,4 +32,4 @@ RUN pip install -r requirements.txt
 
 ENTRYPOINT ["/home/gaelo_pathology_processing/entrypoint.sh"]
 EXPOSE 8000
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "900",  "--log-level", "info", "--log-file", "-", "--access-logfile", "-", "gaelo_processing.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "900",  "--log-level", "info", "--log-file", "-", "--access-logfile", "-", "gaelo_pathology_processing.wsgi:application"]

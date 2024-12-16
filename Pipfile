@@ -8,6 +8,10 @@ djangorestframework = "*"
 pydicom = "*"
 pylibjpeg = {extras = ["all"], version = "*"}
 pyjpegls = "*"
+python-dotenv = "*"
+gunicorn = "*"
+django-environ = "*"
+typing-extensions = "*"
 
 [dev-packages]
 
