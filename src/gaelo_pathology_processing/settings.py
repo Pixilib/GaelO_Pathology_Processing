@@ -201,7 +201,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'gaelo_pathology_processing.middleware.custom_authentication.GaelOProcessingAuthentication',
+        'gaelo_pathology_processing.middleware.custom_authentication.GaelOPathologyProcessingAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [],
 }
