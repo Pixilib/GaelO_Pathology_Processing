@@ -1,13 +1,12 @@
 from django.test import TestCase
-import os
-import unittest 
+import os, base64, unittest
 
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 class TestDicom(TestCase):
 
     def setUp(self):
-        
-        pass
+        credentials = base64.b64encode(b'GaelO:GaelO')
+        self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials.decode('utf-8')
 
     def test_get_zip_dicom(self):
         """Testing the GET request to retrieve a DICOM image as a zip"""
