@@ -48,7 +48,7 @@ class TestConvertToDicom(TestCase):
 
     def test_convert_to_dicom(self):
 
-        test_storage_path = os.getcwd() + '/gaelo_pathology_processing/tests/storage/wsi/')
+        test_storage_path = os.getcwd() + '/gaelo_pathology_processing/tests/storage/wsi/'
         move_to_storage('wsi', test_storage_path,
                         'a38c8a8f747e3858c615614e4e0f6d30')
         move_to_storage('wsi', test_storage_path,
