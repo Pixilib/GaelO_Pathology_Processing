@@ -45,7 +45,6 @@ class TestConvertToDicom(TestCase):
 
             ]
         }
-    @unittest.skip('skip')
 
     def test_convert_to_dicom(self):
 
