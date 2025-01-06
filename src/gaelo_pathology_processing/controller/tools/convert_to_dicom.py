@@ -147,7 +147,7 @@ def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset
 
     command = [
         str(executable_path),
-        "--openslides="+str(openslide_path),
+        "--openslide="+str(openslide_path),
         "--compression=jpeg",
         "--jpeg-quality=100",
         str(image_path),
