@@ -20,9 +20,7 @@ class ConvertToDicomView(APIView):
             requested_dicom_tags = data.get('dicom_tags_study')
             patient_id = requested_dicom_tags.get('PatientID')
             patient_name = requested_dicom_tags.get('PatientName')
-
             slides = data.get('slides', [])
-
             if not slides or not all('wsi_id' in slide for slide in slides):
                 return Response({"error": "Each slide must contain a 'wsi_id'."}, status=400)
 
@@ -144,12 +142,11 @@ def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset
     os.makedirs(output_dir, exist_ok=True)
     executable_path = os.path.join(os.path.dirname(
         __file__), '..', '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
-    openslide_path = os.path.join(os.path.dirname(
-        __file__), '..', '..', '..', '..', 'lib', 'libopenslide.so.1.0.0')
 
     command = [
         str(executable_path),
-        "--openslide="+str(openslide_path),
+        "--compression=jpeg",
+        "--jpeg-quality=100",
         str(image_path),
         "--dataset="+str(dataset_path),
         "--folder",

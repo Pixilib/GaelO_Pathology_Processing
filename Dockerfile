@@ -1,5 +1,5 @@
 # base image  
-FROM python:3.12
+FROM python:3.12-bullseye
 
 # setup environment variable  
 ENV DockerHOME=/home/gaelo_pathology_processing
@@ -24,7 +24,7 @@ COPY ./entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
 #Install open cv dependency
-RUN apt-get update -qy && apt-get install -y --no-install-recommends libgl1
+RUN apt-get update -qy && apt-get install -y --no-install-recommends libgl1 libopenslide0
 
 # install dependencies  
 RUN pip install --upgrade pip
