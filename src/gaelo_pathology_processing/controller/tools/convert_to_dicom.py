@@ -142,9 +142,12 @@ def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset
     os.makedirs(output_dir, exist_ok=True)
     executable_path = os.path.join(os.path.dirname(
         __file__), '..', '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
+    openslide_path = os.path.join(os.path.dirname(
+        __file__), '..', '..', '..', '..', 'lib', 'libopenslide.so.0')
 
     command = [
         str(executable_path),
+        "--openslides="+str(openslide_path),
         "--compression=jpeg",
         "--jpeg-quality=100",
         str(image_path),
