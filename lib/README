@@ -1,0 +1,8 @@
+To retrieve OpenSlide binary, in a linux system :
+apt install libopenslide0
+search for binary   
+dpkg -L libopenslide0
+copy the .so file in this folder to upgrade libopenslide0
+
+
+Current version 3.4.1
