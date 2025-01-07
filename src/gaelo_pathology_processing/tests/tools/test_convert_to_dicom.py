@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os, base64
+from pathlib import Path
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 
 
@@ -51,14 +52,13 @@ class TestConvertToDicom(TestCase):
 
     def test_convert_to_dicom(self):
 
-        test_storage_path = os.getcwd() + '/gaelo_pathology_processing/tests/storage/wsi/'
-        move_to_storage('wsi', test_storage_path,
+        test_storage_path = Path(os.getcwd(), 'gaelo_pathology_processing', 'tests', 'storage', 'wsi')
+        move_to_storage('wsi', str(test_storage_path),
                         'a38c8a8f747e3858c615614e4e0f6d30')
-        move_to_storage('wsi', test_storage_path,
+        move_to_storage('wsi', str(test_storage_path),
                         'b3a10b48bd26c96df930e7b2ecf0a9a4')
 
         response = self.client.post(
             "/tools/conversion/", self.valid_payload, content_type="application/json")
-        print(response.json())
 
         self.assertEqual(response.status_code, 200)
