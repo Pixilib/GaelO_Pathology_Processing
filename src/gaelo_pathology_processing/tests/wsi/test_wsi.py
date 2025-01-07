@@ -1,7 +1,6 @@
 from django.test import TestCase
 import os, base64
 from gaelo_pathology_processing.services.file_helper import move_to_storage
-import unittest
 class TestWsi(TestCase):
 
     def setUp(self):
@@ -22,8 +21,7 @@ class TestWsi(TestCase):
             image.read(),
             content_type='application/octet-stream'
         )
-            
-        print("Response content:", response.content.decode())
+
         self.assertEqual(response.status_code, 200)
 
     def test_get_wsi(self):
@@ -39,6 +37,4 @@ class TestWsi(TestCase):
 
     def test_get_wsi_metadata(self):
         response = self.client.get('/wsi/a38c8a8f747e3858c615614e4e0f6d30/metadata')
-        if response.status_code != 200:
-            print(response.data)
         self.assertEqual(response.status_code, 200)

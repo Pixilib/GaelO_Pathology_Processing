@@ -10,16 +10,14 @@ class WsiMetadata(APIView):
 
     def get(self, request : Request, id : str):
         try:
-            wsi_file_path = get_file('wsi', id)
-            if not wsi_file_path:
+            wsi_file = get_file('wsi', id)
+            if not wsi_file:
                 return Response({f"No WSI files found for ID {id}"}, status=404)
-            
-            slide = OpenSlide(wsi_file_path)
+            slide = OpenSlide(wsi_file.name)
             properties = slide.properties
             
             return Response(properties, status=200)
             
         except Exception as e:
-
-            return Response({"error": "Failed to retrieve metadata"}, status=400)
+            return Response({"error": "Failed to retrieve metadata"}, status=500)
             

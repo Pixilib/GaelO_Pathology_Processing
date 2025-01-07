@@ -23,7 +23,6 @@ class WsiView(APIView):
 
             file_hash = get_hash(temp_file_path)
             format = OpenSlide.detect_format(temp_file_path)
-            print(format)
 
             if format is None:
                 return Response({'error': 'Invalid file or unsupported format'}, status=400)
@@ -39,8 +38,7 @@ class WsiView(APIView):
 
     def get(self, request: Request, id: str):
         try:
-            wsi_file_path = get_file('wsi', id)
-            file = get_file('wsi', wsi_file_path)
+            file = get_file('wsi', id)
             response = FileResponse(file, as_attachment=True)
             response['Content-Disposition'] = f'attachment; filename="{id}"'
             response['Content-Type'] = 'application/octet-stream'
