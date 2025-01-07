@@ -20,6 +20,8 @@ pylibjpeg-libjpeg = "==2.3.0"
 pylibjpeg-openjpeg = "==2.4.0"
 pylibjpeg-rle = "==2.0.0"
 sqlparse = "==0.5.3"
+openslide-python = "*"
+openslide-bin = "*"
 
 [dev-packages]
 

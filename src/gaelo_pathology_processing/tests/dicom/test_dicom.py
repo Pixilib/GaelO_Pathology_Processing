@@ -1,5 +1,5 @@
 from django.test import TestCase
-import os, base64, unittest
+import os, base64
 
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 class TestDicom(TestCase):

@@ -36,7 +36,6 @@ class ConvertToDicomView(APIView):
             # Generate a study instance UID to make all series belongs to the same study
             study_instance_uid = generate_uid()
             number_of_all_instances = 0
-            results = []
             for slide in slides:
 
                 # initialization of the dataset
@@ -66,7 +65,6 @@ class ConvertToDicomView(APIView):
 
                     # move zip into storage
                     move_to_storage('dicoms', zip_temp_path, zip_file_name)
-                    results.append({"slide_id": wsi_id, "status": "success"})
             return Response({"study_instance_uid": study_instance_uid, 'number_of_instances' : number_of_all_instances}, status=200)
 
         except json.JSONDecodeError:
