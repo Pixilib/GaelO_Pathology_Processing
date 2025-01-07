@@ -6,8 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from pydicom.uid import generate_uid
 
-from gaelo_pathology_processing.services.file_helper import move_to_storage
-from gaelo_pathology_processing.services.utils import body_to_dict, find_wsi_file
+from gaelo_pathology_processing.services.file_helper import move_to_storage, get_file
+from gaelo_pathology_processing.services.utils import body_to_dict
 
 class ConvertToDicomView(APIView):
 
@@ -41,7 +41,7 @@ class ConvertToDicomView(APIView):
                 # initialization of the dataset
                 dicom_tags = initialize_dicom_tags(study_instance_uid, data['dicom_tags_study'] | slide['dicom_tags_series'])
                 wsi_id = slide['wsi_id']
-                wsi_path = find_wsi_file(wsi_id)
+                wsi_path = get_file('wsi', wsi_id)
                 if not wsi_path:
                     return Response({"error": f"WSI file with ID '{wsi_id}' does not exist."}, status=404)
 

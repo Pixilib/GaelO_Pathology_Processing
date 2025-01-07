@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash
-from gaelo_pathology_processing.services.utils import find_wsi_file
 
 
 class WsiView(APIView):
@@ -40,7 +39,7 @@ class WsiView(APIView):
 
     def get(self, request: Request, id: str):
         try:
-            wsi_file_path = find_wsi_file(id)
+            wsi_file_path = get_file('wsi', id)
             file = get_file('wsi', wsi_file_path)
             response = FileResponse(file, as_attachment=True)
             response['Content-Disposition'] = f'attachment; filename="{id}"'
