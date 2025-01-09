@@ -1,4 +1,10 @@
-import json, subprocess, os, tempfile, zipfile
+import json
+import subprocess
+import os
+import tempfile
+import zipfile
+import hashlib
+import uuid
 from pathlib import Path
 
 from rest_framework.request import Request
@@ -9,7 +15,15 @@ from pydicom.uid import generate_uid
 from gaelo_pathology_processing.services.file_helper import move_to_storage, get_file
 from gaelo_pathology_processing.services.utils import body_to_dict
 
+
 class ConvertToDicomView(APIView):
+
+    def get_study_orthanc_id(self, patient_id, study_instance_uid) -> str:
+        string_to_hash = str(patient_id) + '|' + str(study_instance_uid)
+        myhash = hashlib.sha1(string_to_hash.encode('utf-8'))
+        hash = myhash.hexdigest()
+        hash = '-'.join(hash[i:i+8] for i in range(0, len(hash), 8))
+        return hash
 
     def post(self, request: Request) -> Response:
         """
@@ -39,7 +53,8 @@ class ConvertToDicomView(APIView):
             for slide in slides:
 
                 # initialization of the dataset
-                dicom_tags = initialize_dicom_tags(study_instance_uid, data['dicom_tags_study'] | slide['dicom_tags_series'])
+                dicom_tags = initialize_dicom_tags(
+                    study_instance_uid, data['dicom_tags_study'] | slide['dicom_tags_series'])
                 wsi_id = slide['wsi_id']
                 wsi_path = get_file('wsi', wsi_id)
                 if not wsi_path:
@@ -65,7 +80,9 @@ class ConvertToDicomView(APIView):
 
                     # move zip into storage
                     move_to_storage('dicoms', zip_temp_path, zip_file_name)
-            return Response({"study_instance_uid": study_instance_uid, 'number_of_instances' : number_of_all_instances}, status=200)
+
+            study_orthanc_id = self.get_study_orthanc_id( patient_id, study_instance_uid)
+            return Response({"study_instance_uid": study_instance_uid, 'study_orthanc_id': study_orthanc_id,  'number_of_instances': number_of_all_instances}, status=200)
 
         except json.JSONDecodeError:
             return Response({"error": "Invalid JSON."}, status=400)
@@ -89,7 +106,7 @@ def initialize_dicom_tags(study_instance_uid, data):
         "AccessionNumber": data.get('AccessionNumber', "GaelO"),
         "SeriesInstanceUID": generate_uid(),
         "SeriesDescription": data.get('SeriesDescription', ''),
-        "SeriesNumber": data.get("SeriesNumber"), # --> could be a string
+        "SeriesNumber": data.get("SeriesNumber", '1'),  # --> could be a string
         "Manufacturer": data.get('Manufacturer'),
         "ImageType": data.get('ImageType', "ORIGINAL\\SECONDARY"),
         "FocusMethod": data.get('FocusMethod', "AUTO"),
@@ -118,9 +135,8 @@ def zip_dicom(folder_path: str, zip_path: str) -> int:
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
                     file_path = Path(root) / file
-                    arcname = file
-                    print(f"Added file {file_path} to the archive.")
-                    zipf.write(file_path, arcname=arcname)
+                    destination_filename = str(uuid.uuid4())
+                    zipf.write(file_path, arcname=destination_filename)
         return len(files)
     except Exception as e:
         print(f"Error creating zip : {e}")
