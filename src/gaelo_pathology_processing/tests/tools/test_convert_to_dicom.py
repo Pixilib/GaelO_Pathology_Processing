@@ -32,7 +32,7 @@ class TestConvertToDicom(TestCase):
             },
             "slides": [
                 {"dicom_tags_series": {
-                    "SeriesDescription": "Serie description",
+                    "SeriesDescription": "Serie description 1",
                     "SeriesNumber": '1',
 
                 },
@@ -40,7 +40,7 @@ class TestConvertToDicom(TestCase):
 
                 },
                 {"dicom_tags_series": {
-                    "SeriesDescription": "Serie description",
+                    "SeriesDescription": "Serie description 2",
                     "SeriesNumber": '2',
 
                 },

@@ -1,6 +1,5 @@
 from django.test import TestCase
 import os, base64
-
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 class TestDicom(TestCase):
 
@@ -19,5 +18,11 @@ class TestDicom(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/zip')
         self.assertIn(f'attachment; filename="{id}.zip"', response['Content-Disposition'])
-        
+
+
+    def test_delete_zip_dicom(self):
+        test_storage_path = os.getcwd() + '/gaelo_pathology_processing/tests/storage/dicom/test_dicom_delete.zip'        
+        move_to_storage('dicoms', test_storage_path, 'test_dicom_delete.zip')
+        response = self.client.delete('/dicom/'+ 'test_dicom_delete.zip/')
+        self.assertEqual(response.status_code, 200)
 

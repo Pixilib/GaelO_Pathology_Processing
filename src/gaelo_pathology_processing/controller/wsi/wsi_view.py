@@ -5,8 +5,9 @@ from django.http import FileResponse
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from ...exceptions import GaelONotFoundException
 
-from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash
+from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash, is_file_exists, delete_file
 
 
 class WsiView(APIView):
@@ -46,3 +47,10 @@ class WsiView(APIView):
             return response
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+        
+
+    def delete(self, request : Request, id : str):
+        if not is_file_exists('wsi', id):
+            raise GaelONotFoundException("File doesn't exist")
+        delete_file('wsi', id)
+        return Response(status=200)

@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from pydicom.uid import generate_uid
 
 from gaelo_pathology_processing.services.file_helper import move_to_storage, get_file
-from gaelo_pathology_processing.services.utils import body_to_dict
+from gaelo_pathology_processing.services.utils import body_to_dict, transcode_dicom_to_jpeg_lossless
 
 
 class ConvertToDicomView(APIView):
@@ -69,20 +69,17 @@ class ConvertToDicomView(APIView):
                     wsi_path, temp_dir_dicom.name, wsi_id, temp_json.name)
                 #append temporary folder to folder array to fuse for generating dicom zip batch
                 dicom_folders.append(temp_dir_dicom)
-
-
+            
             # create final zip file
             zip_file_name = f"{study_instance_uid}.zip"
             zip_temp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=zip_file_name)
             zip_file = zipfile.ZipFile( zip_temp_file.name, 'w')
-
             # compute number of instances
             number_of_all_instances = 0
             for dicom_folder in dicom_folders:
                 # add all file in it (with uuid name)
-                number_of_instances = add_files_to_zip( dicom_folder.name, zip_file)
+                number_of_instances = add_files_to_zip( dicom_folder.name, zip_file, True)
                 number_of_all_instances = number_of_all_instances + number_of_instances
-
             zip_file.close()
             # move zip into storage
             move_to_storage('dicoms', zip_temp_file.name, zip_file_name)
@@ -127,9 +124,8 @@ def initialize_dicom_tags(study_instance_uid, data):
             }
         ]
     }
-
-
-def add_files_to_zip(folder_path: str, zip_file: zipfile.ZipFile) -> int:
+         
+def add_files_to_zip(folder_path: str, zip_file: zipfile.ZipFile, compress_jpeg_ls = False) -> int:
     """
     Creates a ZIP file containing all the contents of the specified folder.
 
@@ -141,7 +137,11 @@ def add_files_to_zip(folder_path: str, zip_file: zipfile.ZipFile) -> int:
         for file in files:
             file_path = Path(root) / file
             destination_filename = str(uuid.uuid4())
-            zip_file.write(file_path, arcname=destination_filename)
+            if(compress_jpeg_ls) : 
+                dicom_compressed_temp = tempfile.NamedTemporaryFile(mode="w+")
+                transcode_dicom_to_jpeg_lossless(file_path, dicom_compressed_temp.name)
+                zip_file.write(dicom_compressed_temp.name, arcname=destination_filename)
+            else : zip_file.write(file_path, arcname=destination_filename)
     return len(files)
 
 
