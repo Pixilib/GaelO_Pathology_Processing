@@ -78,7 +78,7 @@ class ConvertToDicomView(APIView):
             number_of_all_instances = 0
             for dicom_folder in dicom_folders:
                 # add all file in it (with uuid name)
-                number_of_instances = add_files_to_zip( dicom_folder.name, zip_file, True)
+                number_of_instances = add_files_to_zip( dicom_folder.name, zip_file, False)
                 number_of_all_instances = number_of_all_instances + number_of_instances
             zip_file.close()
             # move zip into storage
