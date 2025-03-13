@@ -30,7 +30,7 @@ jobs:
 
       - name: install libjpeg
         run: |
-          apt get install libjpeg-turbo
+          apt-get install libjpeg-turbo
 
       - uses: actions/setup-python@v5
         with:
