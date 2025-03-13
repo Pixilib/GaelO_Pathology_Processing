@@ -79,7 +79,7 @@ class OrthancDicomizer(AbstractDicomizer):
             "--dataset="+metadata_path.name,
             "--folder",
             str(output_path),
-            "--force-openslide=1",
+            "--force-openslide", "1",
             "--max-size=10" 
         ]
 
