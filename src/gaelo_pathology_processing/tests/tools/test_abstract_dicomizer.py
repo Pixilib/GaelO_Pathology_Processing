@@ -1,39 +1,49 @@
 from django.test import TestCase
-from unittest.mock import MagicMock, Mock, patch
 from gaelo_pathology_processing.services.abstractDicomizer import AbstractDicomizer, OrthancDicomizer, BigPictureDicomizer
 from wsidicomizer.metadata import WsiDicomizerMetadata
-
+from pathlib import Path
+import os
+from gaelo_pathology_processing.services.file_helper import move_to_storage, get_file
+import tempfile
+from wsidicom.metadata import (
+    Equipment,
+    Patient,
+    Series,
+    Study,
+)
 class TestAbstractDicomizer(TestCase):
     
-    @patch('gaelo_pathology_processing.services.abstractDicomizer.openslide.OpenSlide.detect_format')
-    @patch('gaelo_pathology_processing.services.abstractDicomizer.is_isyntax')
-    def test_get_dicomizer(self, mock_is_isyntax, mock_detect_format):
-        mock_detect_format.return_value = 'aperio'
-        dicomizer = AbstractDicomizer.get_dicomizer('image_path')
+    def setUp(self):
+        self.test_storage_path_wsi = Path(os.getcwd(), 'gaelo_pathology_processing', 'tests', 'storage', 'wsi')
+        move_to_storage('wsi', str(self.test_storage_path_wsi) + '/a38c8a8f747e3858c615614e4e0f6d30','a38c8a8f747e3858c615614e4e0f6d30') #aperio
+        move_to_storage('wsi', str(self.test_storage_path_wsi) + '/b3a10b48bd26c96df930e7b2ecf0a9a4','b3a10b48bd26c96df930e7b2ecf0a9a4') #None
+        self.wsi_path_aperio = get_file('wsi', 'a38c8a8f747e3858c615614e4e0f6d30')
+        self.wsi_path_none = get_file('wsi', 'b3a10b48bd26c96df930e7b2ecf0a9a4')
+        self.temp_output_dir = tempfile.mkdtemp()
+   
+    def test_get_dicomizer(self):
+        dicomizer = AbstractDicomizer.get_dicomizer(self.wsi_path_aperio.name)
         self.assertIsInstance(dicomizer, BigPictureDicomizer)
 
-        mock_detect_format.return_value = 'unknown_format'
-        mock_is_isyntax.return_value = False
-        dicomizer = AbstractDicomizer.get_dicomizer('image_path')
+        dicomizer = AbstractDicomizer.get_dicomizer(self.wsi_path_none.name)
         self.assertIsInstance(dicomizer, OrthancDicomizer)
 
-    @patch.object(OrthancDicomizer, 'convert_to_dicom')
-    @patch.object(OrthancDicomizer, 'initialize_dicoms_tags')
-    def test_convert(self, mock_initialize_dicoms_tags, mock_convert_to_dicom):
+    
+    def test_orthanc_convert_to_dicom(self):
         dicomizer = OrthancDicomizer()
-        dicomizer.convert('uid', {}, 'image_path', 'output_path')
-        mock_initialize_dicoms_tags.assert_called_once_with('uid', {})
-        mock_convert_to_dicom.assert_called_once_with('image_path', 'output_path')
+        dicomizer.wsi_metadata = {
+            'PatientID': '123',
+            'PatientName': 'John Doe',
+            'StudyID': '456',
+            'AccessionNumber': '789',
+            'SeriesDescription': 'Test Series',
+            'Manufacturer': 'Test Manufacturer'
+        }
+        dicomizer.convert_to_dicom(self.wsi_path_none.name, self.temp_output_dir)
 
-    @patch('gaelo_pathology_processing.services.abstractDicomizer.subprocess.run')
-    @patch('gaelo_pathology_processing.services.abstractDicomizer.tempfile.NamedTemporaryFile')
-    def test_orthanc_convert_to_dicom(self, mock_tempfile, mock_subprocess_run):
-        dicomizer = OrthancDicomizer()
-        dicomizer.wsi_metadata = {}
-        mock_tempfile.return_value_name = 'metadata_path'
-        dicomizer.convert_to_dicom('image_path', 'output_path')
-        mock_subprocess_run.assert_called_once()
-
+        output_files = os.listdir(self.temp_output_dir)
+        print(output_files)
+        self.assertTrue(output_files)
 
     def test_orthanc_initialize_dicoms_tags(self):
         dicomizer = OrthancDicomizer()
@@ -50,13 +60,15 @@ class TestAbstractDicomizer(TestCase):
         self.assertEqual(dicomizer.wsi_metadata['PatientID'], '123')
         self.assertEqual(dicomizer.wsi_metadata['PatientName'], 'John Doe')
 
-    @patch('gaelo_pathology_processing.services.abstractDicomizer.WsiDicomizer.convert')
-    def test_big_picture_convert_to_dicom(self, mock_convert):
+    def test_big_picture_convert_to_dicom(self):
         dicomizer = BigPictureDicomizer()
-        dicomizer.wsi_metadata = MagicMock(spec=WsiDicomizerMetadata)
-        dicomizer.convert_to_dicom('image_path', 'output_path')
-        mock_convert.assert_called_once_with('image_path', 'output_path', dicomizer.wsi_metadata)
-
+        dicomizer.wsi_metadata = WsiDicomizerMetadata(
+            study=Study(identifier='456'), series=Series(number=1), patient=Patient(name='John Doe'), equipment=Equipment(manufacturer='manufacturer')
+        )
+        dicomizer.convert_to_dicom(self.wsi_path_aperio.name, self.temp_output_dir)
+        output_files = os.listdir(self.temp_output_dir)
+        print(output_files)
+        self.assertTrue(output_files)
 
     def test_big_picture_initialize_dicoms_tags(self):
         dicomizer = BigPictureDicomizer()
