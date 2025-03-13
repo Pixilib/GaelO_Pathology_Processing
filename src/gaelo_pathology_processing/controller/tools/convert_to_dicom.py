@@ -90,8 +90,6 @@ class ConvertToDicomView(APIView):
         except KeyError as e:
             return Response({"error": f"Missing key: {str(e)}"}, status=400)
         except Exception as e:
-            raise(e)
-            print('exception controller : ' + str(e))
             return Response({"error": str(e)}, status=500)
 
 

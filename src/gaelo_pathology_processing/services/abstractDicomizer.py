@@ -1,11 +1,9 @@
 import os
 import json
 import tempfile
-from pathlib import Path
 import subprocess
 from abc import ABC, abstractmethod
 from pydicom.uid import generate_uid
-import openslide
 
 from wsidicomizer.metadata import WsiDicomizerMetadata
 from wsidicomizer import WsiDicomizer
@@ -15,15 +13,16 @@ from wsidicom.metadata import (
     Series,
     Study,
 )
-from gaelo_pathology_processing.services.utils import is_isyntax
+from wsidicom.codec import JpegSettings, Subsampling
+from gaelo_pathology_processing.services.utils import get_wsi_format
 
 
 class AbstractDicomizer(ABC):
 
     @classmethod
     def get_dicomizer(cls, image_path: str):
-        image_format = openslide.OpenSlide.detect_format(image_path)
-        if image_format == 'aperio' or image_format == 'leica' or is_isyntax(image_path):
+        image_format = get_wsi_format(image_path)
+        if image_format == 'aperio' or image_format == 'leica' or image_format == 'isyntax':
             big_picture = BigPictureDicomizer()
             return big_picture
         else:
@@ -80,7 +79,8 @@ class OrthancDicomizer(AbstractDicomizer):
             "--dataset="+metadata_path.name,
             "--folder",
             str(output_path),
-            "--force-openslide", "1"
+            "--force-openslide", "1",
+            "--max-size=10" 
         ]
 
         try:
@@ -136,10 +136,20 @@ class BigPictureDicomizer(AbstractDicomizer):
         os.makedirs(output_path, exist_ok=True)
 
         try:
+
+            subsampling = Subsampling.from_string("420")
+            encoding_settings = JpegSettings(
+                quality=100, subsampling=subsampling
+            )
+        
             WsiDicomizer.convert(
-                image_path,
-                output_path,
-                self.wsi_metadata
+                filepath= image_path,
+                output_path= output_path,
+                metadata = self.wsi_metadata,
+                encoding = encoding_settings,
+                include_label=False,
+                include_overview=False,
+                include_confidential=True,
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
