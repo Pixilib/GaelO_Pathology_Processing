@@ -13,6 +13,7 @@ from wsidicom.metadata import (
     Series,
     Study,
 )
+from wsidicom.codec import JpegSettings, Subsampling
 from gaelo_pathology_processing.services.utils import get_wsi_format
 
 
@@ -78,7 +79,8 @@ class OrthancDicomizer(AbstractDicomizer):
             "--dataset="+metadata_path.name,
             "--folder",
             str(output_path),
-            "--force-openslide", "1"
+            "--force-openslide=1",
+            "--max-size=10" 
         ]
 
         try:
@@ -134,10 +136,20 @@ class BigPictureDicomizer(AbstractDicomizer):
         os.makedirs(output_path, exist_ok=True)
 
         try:
+
+            subsampling = Subsampling.from_string("420")
+            encoding_settings = JpegSettings(
+                quality="100", subsampling=subsampling
+            )
+        
             WsiDicomizer.convert(
-                image_path,
-                output_path,
-                self.wsi_metadata
+                filepath= image_path,
+                output_path= output_path,
+                metadata = self.wsi_metadata,
+                encoding = encoding_settings,
+                include_label=False,
+                include_overview=False,
+                include_confidential=True,
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
