@@ -32,20 +32,35 @@ class TestConvertToDicom(TestCase):
             },
             "slides": [
                 {"dicom_tags_series": {
-                    "SeriesDescription": "Serie description",
+                    "SeriesDescription": "Serie description 1",
                     "SeriesNumber": '1',
 
                 },
                     "wsi_id": "a38c8a8f747e3858c615614e4e0f6d30",
 
                 },
-                {"dicom_tags_series": {
-                    "SeriesDescription": "Serie description",
-                    "SeriesNumber": '2',
+                # {"dicom_tags_series": {
+                #     "SeriesDescription": "Serie description 2",
+                #     "SeriesNumber": '2',
 
-                },
-                    "wsi_id": "b3a10b48bd26c96df930e7b2ecf0a9a4",
-                }
+                # },
+                #     "wsi_id": "1fb05ba18518cef86cfeac1123322933",
+                # },
+                # {"dicom_tags_series": {
+                #     "SeriesDescription": "Serie description 3",
+                #     "SeriesNumber": '3',
+
+                # },
+                #     "wsi_id": "86bed2d21e61b7062c9a8aecba077f6d",
+                # },
+
+                #  {"dicom_tags_series": {
+                #     "SeriesDescription": "Serie description 4",
+                #     "SeriesNumber": '4',
+
+                # },
+                #     "wsi_id": "d762ed9e13d4c47549672a54777f40e3",
+                # }
 
             ]
         }
@@ -54,9 +69,13 @@ class TestConvertToDicom(TestCase):
 
         test_storage_path = Path(os.getcwd(), 'gaelo_pathology_processing', 'tests', 'storage', 'wsi')
         move_to_storage('wsi', str(test_storage_path) + '/a38c8a8f747e3858c615614e4e0f6d30',
-                        'a38c8a8f747e3858c615614e4e0f6d30')
-        move_to_storage('wsi', str(test_storage_path) + '/b3a10b48bd26c96df930e7b2ecf0a9a4',
-                        'b3a10b48bd26c96df930e7b2ecf0a9a4')
+                        'a38c8a8f747e3858c615614e4e0f6d30') #aperio
+        # move_to_storage('wsi', str(test_storage_path) + '/1fb05ba18518cef86cfeac1123322933',
+        #                 '1fb05ba18518cef86cfeac1123322933') #philips TIFF 
+        # move_to_storage('wsi', str(test_storage_path) + '/86bed2d21e61b7062c9a8aecba077f6d',
+        #                 '86bed2d21e61b7062c9a8aecba077f6d') #ndpi 
+        # move_to_storage('wsi', str(test_storage_path) + '/d762ed9e13d4c47549672a54777f40e3',
+        #                 'd762ed9e13d4c47549672a54777f40e3') #isyntax 
 
         response = self.client.post(
             "/tools/conversion/", self.valid_payload, content_type="application/json")
