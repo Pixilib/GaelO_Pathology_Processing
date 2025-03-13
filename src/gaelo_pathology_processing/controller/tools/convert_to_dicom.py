@@ -1,8 +1,6 @@
 import json
-import subprocess
 import os
 import tempfile
-from time import sleep
 import zipfile
 import hashlib
 import uuid
@@ -13,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from pydicom.uid import generate_uid
 
+from gaelo_pathology_processing.services.abstractDicomizer import AbstractDicomizer
 from gaelo_pathology_processing.services.file_helper import move_to_storage, get_file
 from gaelo_pathology_processing.services.utils import body_to_dict, transcode_dicom_to_jpeg_lossless
 
@@ -53,32 +52,31 @@ class ConvertToDicomView(APIView):
             dicom_folders = []
             for slide in slides:
                 # initialization of the dataset
-                dicom_tags = initialize_dicom_tags(
-                    study_instance_uid, data['dicom_tags_study'] | slide['dicom_tags_series'])
                 wsi_id = slide['wsi_id']
                 wsi_path = get_file('wsi', wsi_id)
                 if not wsi_path:
                     return Response({"error": f"WSI file with ID '{wsi_id}' does not exist."}, status=404)
-                #create json dataset for dicom metadata
                 temp_dir_dicom = tempfile.TemporaryDirectory()
-                temp_json = tempfile.NamedTemporaryFile(mode="w+", suffix='.json')
-                json.dump(dicom_tags, temp_json)
-                temp_json.flush()
+
+                dicom_tags = data['dicom_tags_study'] | slide['dicom_tags_series']
+                dicomizer = AbstractDicomizer.get_dicomizer(wsi_path.name)
                 # conversion to DICOM
-                convert_to_dicom(
-                    wsi_path, temp_dir_dicom.name, wsi_id, temp_json.name)
-                #append temporary folder to folder array to fuse for generating dicom zip batch
+                dicomizer.convert(study_instance_uid, dicom_tags,
+                                  wsi_path.name, temp_dir_dicom.name)
+                # append temporary folder to folder array to fuse for generating dicom zip batch
                 dicom_folders.append(temp_dir_dicom)
-            
+
             # create final zip file
             zip_file_name = f"{study_instance_uid}.zip"
-            zip_temp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=zip_file_name)
-            zip_file = zipfile.ZipFile( zip_temp_file.name, 'w')
+            zip_temp_file = tempfile.NamedTemporaryFile(
+                mode="w+", suffix=zip_file_name)
+            zip_file = zipfile.ZipFile(zip_temp_file.name, 'w')
             # compute number of instances
             number_of_all_instances = 0
             for dicom_folder in dicom_folders:
                 # add all file in it (with uuid name)
-                number_of_instances = add_files_to_zip( dicom_folder.name, zip_file, False)
+                number_of_instances = add_files_to_zip(
+                    dicom_folder.name, zip_file, False)
                 number_of_all_instances = number_of_all_instances + number_of_instances
             zip_file.close()
             # move zip into storage
@@ -92,40 +90,12 @@ class ConvertToDicomView(APIView):
         except KeyError as e:
             return Response({"error": f"Missing key: {str(e)}"}, status=400)
         except Exception as e:
-            print(e)
+            raise(e)
+            print('exception controller : ' + str(e))
             return Response({"error": str(e)}, status=500)
 
 
-def initialize_dicom_tags(study_instance_uid, data):
-    """Initialize the DICOM tags dataset."""
-
-    if not isinstance(data, dict):  # Vérifie si 'data' est un dictionnaire
-        raise ValueError("Expected a dictionary, got None or an invalid type.")
-    return {
-        "PatientID": data.get('PatientID'),
-        "PatientName": data.get('PatientName'),
-        "StudyInstanceUID": study_instance_uid,
-        "StudyDescription": data.get('StudyDescription'),
-        "StudyID": data.get('StudyID'),
-        "AccessionNumber": data.get('AccessionNumber', "GaelO"),
-        "SeriesInstanceUID": generate_uid(),
-        "SeriesDescription": data.get('SeriesDescription', ''),
-        "SeriesNumber": data.get("SeriesNumber", '1'),  # --> could be a string
-        "Manufacturer": data.get('Manufacturer'),
-        "ImageType": data.get('ImageType', "ORIGINAL\\SECONDARY"),
-        "FocusMethod": data.get('FocusMethod', "AUTO"),
-        "ExtendedDepthOfField": data.get('ExtendedDepthOfField', "NO"),
-        "SpecimenDescriptionSequence": [
-            {
-                "SpecimenIdentifier": "Specimen^Identifier",
-                "SpecimenUID": "1.2.276.0.7230010.3.1.4.3252829876.4112.1426166133.871",
-                "IssuerOfTheSpecimenIdentifierSequence": [],
-                "SpecimenPreparationSequence": []
-            }
-        ]
-    }
-         
-def add_files_to_zip(folder_path: str, zip_file: zipfile.ZipFile, compress_jpeg_ls = False) -> int:
+def add_files_to_zip(folder_path: str, zip_file: zipfile.ZipFile, compress_jpeg_ls=False) -> int:
     """
     Creates a ZIP file containing all the contents of the specified folder.
 
@@ -137,44 +107,12 @@ def add_files_to_zip(folder_path: str, zip_file: zipfile.ZipFile, compress_jpeg_
         for file in files:
             file_path = Path(root) / file
             destination_filename = str(uuid.uuid4())
-            if(compress_jpeg_ls) : 
+            if (compress_jpeg_ls):
                 dicom_compressed_temp = tempfile.NamedTemporaryFile(mode="w+")
-                transcode_dicom_to_jpeg_lossless(file_path, dicom_compressed_temp.name)
-                zip_file.write(dicom_compressed_temp.name, arcname=destination_filename)
-            else : zip_file.write(file_path, arcname=destination_filename)
+                transcode_dicom_to_jpeg_lossless(
+                    file_path, dicom_compressed_temp.name)
+                zip_file.write(dicom_compressed_temp.name,
+                               arcname=destination_filename)
+            else:
+                zip_file.write(file_path, arcname=destination_filename)
     return len(files)
-
-
-
-def convert_to_dicom(image_path: str, base_output_dir: str, wsi_id: str, dataset_path: str):
-    """
-    Converts an image to a DICOM file using OrthancWSIDicomizer.
-
-    Args:
-        image_path (str): Path of image
-        base_output_dir (str): Path of the output directory (after conversion)
-        wsi_id (str): ID of the wsi image to convert
-        dataset_path (str): Path of the dataset.json for the dicoms tags
-    """
-    output_dir = Path(base_output_dir) / wsi_id
-    os.makedirs(output_dir, exist_ok=True)
-    executable_path = os.path.join(os.path.dirname(
-        __file__), '..', '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
-    openslide_path = os.path.join(os.path.dirname(
-        __file__), '..', '..', '..', '..', 'lib', 'libopenslide.so.0')
-
-    command = [
-        str(executable_path),
-        "--openslide="+str(openslide_path),
-        "--compression=jpeg",
-        "--jpeg-quality=100",
-        str(image_path),
-        "--dataset="+str(dataset_path),
-        "--folder",
-        str(output_dir)
-    ]
-
-    try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"Error converting to DICOM : {e}")

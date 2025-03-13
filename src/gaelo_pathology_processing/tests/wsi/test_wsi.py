@@ -1,5 +1,5 @@
 from django.test import TestCase
-import os, base64
+import os, base64, glob
 from gaelo_pathology_processing.services.file_helper import move_to_storage
 class TestWsi(TestCase):
 
@@ -11,18 +11,21 @@ class TestWsi(TestCase):
         """Testing the POST request to retrieve a wsi image"""
 
         test_storage_path = os.path.join(os.getcwd(), 'gaelo_pathology_processing/tests/storage/wsi/')
-        file_path = os.path.join(test_storage_path, 'a38c8a8f747e3858c615614e4e0f6d30')
-        image = open(
-            file_path, "rb"
-        )
+        path = os.path.join(test_storage_path, 'a38c8a8f747e3858c615614e4e0f6d30') #a38c8a8f747e3858c615614e4e0f6d30
+        print(path)
+        if os.path.isfile(path):
+            file_paths = [path]
+        else:
+            file_paths = glob.glob(os.path.join(path, '*'))
 
-        response = self.client.post(
-            "/wsi/",
-            image.read(),
-            content_type='application/octet-stream'
-        )
-
-        self.assertEqual(response.status_code, 200)
+        for file_path in file_paths:
+            with open(file_path, "rb") as image:
+                response = self.client.post(
+                    "/wsi/",
+                    image.read(),
+                    content_type='application/octet-stream'
+                )
+                self.assertEqual(response.status_code, 200)
 
     def test_get_wsi(self):
         
@@ -36,6 +39,8 @@ class TestWsi(TestCase):
         
 
     def test_get_wsi_metadata(self):
+        test_storage_path = os.getcwd() + '/gaelo_pathology_processing/tests/storage/wsi/a38c8a8f747e3858c615614e4e0f6d30'
+        move_to_storage('wsi', test_storage_path, 'a38c8a8f747e3858c615614e4e0f6d30')
         response = self.client.get('/wsi/a38c8a8f747e3858c615614e4e0f6d30/metadata')
         self.assertEqual(response.status_code, 200)
 
