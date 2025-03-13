@@ -28,14 +28,9 @@ jobs:
           git config user.name "Salim Kanoun"
           git config user.email "salim.kanoun@gmail.com"
 
-      - name: add libjpeg turbo repository
-        run: |
-          sudo wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | \
-          gpg --dearmor >/etc/apt/trusted.gpg.d/libjpeg-turbo.gpg && sudo apt update
-
       - name: install libjpeg turbo
         run: |
-          sudo apt-get install libjpeg-turbo
+          sudo apt-get install libjpeg-dev libturbojpeg0-dev
 
       - uses: actions/setup-python@v5
         with:
