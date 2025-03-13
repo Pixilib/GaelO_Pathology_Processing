@@ -1,11 +1,9 @@
 import os
 import json
 import tempfile
-from pathlib import Path
 import subprocess
 from abc import ABC, abstractmethod
 from pydicom.uid import generate_uid
-import openslide
 
 from wsidicomizer.metadata import WsiDicomizerMetadata
 from wsidicomizer import WsiDicomizer
@@ -15,15 +13,15 @@ from wsidicom.metadata import (
     Series,
     Study,
 )
-from gaelo_pathology_processing.services.utils import is_isyntax
+from gaelo_pathology_processing.services.utils import get_wsi_format
 
 
 class AbstractDicomizer(ABC):
 
     @classmethod
     def get_dicomizer(cls, image_path: str):
-        image_format = openslide.OpenSlide.detect_format(image_path)
-        if image_format == 'aperio' or image_format == 'leica' or is_isyntax(image_path):
+        image_format = get_wsi_format(image_path)
+        if image_format == 'aperio' or image_format == 'leica' or image_format == 'isyntax':
             big_picture = BigPictureDicomizer()
             return big_picture
         else:

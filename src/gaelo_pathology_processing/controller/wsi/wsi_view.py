@@ -6,9 +6,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from gaelo_pathology_processing.services.utils import is_isyntax
+from gaelo_pathology_processing.services.utils import get_wsi_format
 from ...exceptions import GaelONotFoundException
-from isyntax import ISyntax
 from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash, is_file_exists, delete_file
 
 
@@ -25,18 +24,12 @@ class WsiView(APIView):
                 temp_file_path = temp_file.name
 
             file_hash = get_hash(temp_file_path)
-            format = OpenSlide.detect_format(temp_file_path)
-            if format is None:
-               if is_isyntax(Path(temp_file_path)):
-                   format = 'isyntax'
-               else:
-                   return Response({'error': 'Invalid file or unsupported format'}, status=400)
-
+            format_wsi = get_wsi_format(Path(temp_file_path))
+            if (format_wsi == None) :
+               return Response({'error': 'Invalid file or unsupported format'}, status=400)
+                   
             move_to_storage('wsi', str(temp_file_path), file_hash)
-
-            return Response({
-                'id': file_hash
-            }, status=200)
+            return Response({'id': file_hash}, status=200)
 
         except Exception as e:
             return Response({'error': f'{str(e)}'}, status=500)
