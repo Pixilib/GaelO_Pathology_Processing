@@ -139,7 +139,7 @@ class BigPictureDicomizer(AbstractDicomizer):
 
             subsampling = Subsampling.from_string("420")
             encoding_settings = JpegSettings(
-                quality="100", subsampling=subsampling
+                quality=100, subsampling=subsampling
             )
         
             WsiDicomizer.convert(
