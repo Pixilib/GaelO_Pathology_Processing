@@ -24,7 +24,7 @@ COPY ./entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
 #Install open cv dependency
-RUN apt-get update -qy && apt-get install -y --no-install-recommends libgl1
+RUN apt-get update -qy && apt-get install -y --no-install-recommends libgl1 libjpeg-dev libturbojpeg0-dev
 
 # install dependencies  
 RUN pip install --upgrade pip
