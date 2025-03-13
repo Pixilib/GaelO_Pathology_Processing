@@ -30,8 +30,8 @@ jobs:
 
       - name: add libjpeg turbo repository
         run: |
-          wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | \
-          gpg --dearmor >/etc/apt/trusted.gpg.d/libjpeg-turbo.gpg && apt update
+          sudo wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | \
+          gpg --dearmor >/etc/apt/trusted.gpg.d/libjpeg-turbo.gpg && sudo apt update
 
       - name: install libjpeg turbo
         run: |
