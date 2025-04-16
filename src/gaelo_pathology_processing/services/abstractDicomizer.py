@@ -80,7 +80,8 @@ class OrthancDicomizer(AbstractDicomizer):
             "--folder",
             str(output_path),
             "--force-openslide", "1",
-            "--max-size=10" 
+            "--max-size=10",
+            "--levels=6"
         ]
 
         try:
@@ -149,7 +150,9 @@ class BigPictureDicomizer(AbstractDicomizer):
                 encoding = encoding_settings,
                 include_label=False,
                 include_overview=False,
+                include_thumbnail=False,
                 include_confidential=True,
+                include_levels=[0, 1, 2, 3],
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
