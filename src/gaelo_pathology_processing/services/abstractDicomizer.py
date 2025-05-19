@@ -152,7 +152,8 @@ class BigPictureDicomizer(AbstractDicomizer):
                 include_overview=False,
                 include_thumbnail=False,
                 include_confidential=True,
-                include_levels=[0, 1, 2, 3],
+                add_missing_levels=True,
+                include_levels=[0, 1, 2, 3, 4, 5],
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
