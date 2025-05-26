@@ -66,7 +66,7 @@ class OrthancDicomizer(AbstractDicomizer):
         executable_path = os.path.join(os.path.dirname(
             __file__), '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
         openslide_path = os.path.join(os.path.dirname(
-            __file__), '..', '..', '..', 'lib', 'libopenslide.so.0')
+            __file__), '..', '..', '..', 'lib', 'libopenslide.so.1')
 
         metadata_path = self.write_json_file(self.wsi_metadata)
 

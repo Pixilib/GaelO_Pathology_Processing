@@ -58,11 +58,20 @@ class ConvertToDicomView(APIView):
                     return Response({"error": f"WSI file with ID '{wsi_id}' does not exist."}, status=404)
                 temp_dir_dicom = tempfile.TemporaryDirectory()
 
+                # Mirax Management: if it is a folder, we pass the folder path
+                if isinstance(wsi_path, str) and os.path.isdir(wsi_path):
+                    mrxs_files = list(Path(wsi_path).glob("*.mrxs"))
+                    if not mrxs_files:
+                        return Response({"error": f"No .mrxs file found in {wsi_path}."}, status=400)
+                    wsi_input = str(mrxs_files[0])
+                else:
+                    wsi_input = str(wsi_path)
+
                 dicom_tags = data['dicom_tags_study'] | slide['dicom_tags_series']
-                dicomizer = AbstractDicomizer.get_dicomizer(wsi_path.name)
+                dicomizer = AbstractDicomizer.get_dicomizer(wsi_input)
                 # conversion to DICOM
                 dicomizer.convert(study_instance_uid, dicom_tags,
-                                  wsi_path.name, temp_dir_dicom.name)
+                                  wsi_input, temp_dir_dicom.name)
                 # append temporary folder to folder array to fuse for generating dicom zip batch
                 dicom_folders.append(temp_dir_dicom)
 
