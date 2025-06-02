@@ -1,6 +1,6 @@
 import hashlib
 from typing import IO
-
+import os
 from django.core.files.storage import storages, Storage
 from django.core.files.base import ContentFile
 
@@ -14,7 +14,7 @@ def __get_storage(storage_name: str) -> Storage:
     return storages[storage_name]
 
 
-def store(storage_name: str, filename: str, payload: str|bytes) -> None:
+def store(storage_name: str, filename: str, payload: str | bytes) -> None:
     storage = __get_storage(storage_name)
     if (not storage.exists(filename)):
         storage.save(filename, ContentFile(payload))
@@ -27,10 +27,26 @@ def move_to_storage(storage_name: str, path_origin: str, filename: str) -> None:
         storage.save(filename, open(path_origin, 'rb'))
 
 
-def get_file(storage_name: str, filename: str) -> IO[any]:
+def get_file(storage_name: str, filename: str):
+    """
+        Retrieves a file or folder from the specified storage.
+
+        Args:
+            storage_name (str): The name of the storage (ex: 'wsi').
+            filename (str): The name of the file or folder to recover.
+
+        Returns:
+            str | IO:
+                - If the path corresponds to a folder (eg: Mirax folder), returns the absolute path of the folder (str).
+                - Otherwise, returns a file object opened in binary (IO) mode.
+    """
     storage = __get_storage(storage_name)
-    file = storage.open(filename, 'rb')
-    return file
+    folder_path = os.path.join(storage.location, filename)
+    if os.path.isdir(folder_path):
+        return folder_path 
+    else:
+        file = storage.open(filename, 'rb')
+        return file
 
 
 def is_file_exists(storage_name: str, filename: str) -> bool:

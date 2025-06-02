@@ -66,7 +66,7 @@ class OrthancDicomizer(AbstractDicomizer):
         executable_path = os.path.join(os.path.dirname(
             __file__), '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
         openslide_path = os.path.join(os.path.dirname(
-            __file__), '..', '..', '..', 'lib', 'libopenslide.so.0')
+            __file__), '..', '..', '..', 'lib', 'libopenslide.so.1')
 
         metadata_path = self.write_json_file(self.wsi_metadata)
 
@@ -80,7 +80,8 @@ class OrthancDicomizer(AbstractDicomizer):
             "--folder",
             str(output_path),
             "--force-openslide", "1",
-            "--max-size=10" 
+            "--max-size=10",
+            "--levels=6"
         ]
 
         try:
@@ -149,7 +150,10 @@ class BigPictureDicomizer(AbstractDicomizer):
                 encoding = encoding_settings,
                 include_label=False,
                 include_overview=False,
+                include_thumbnail=False,
                 include_confidential=True,
+                add_missing_levels=True,
+                include_levels=[0, 1, 2, 3, 4, 5],
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
