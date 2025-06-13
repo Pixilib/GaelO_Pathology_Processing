@@ -36,17 +36,11 @@ def get_file(storage_name: str, filename: str):
             filename (str): The name of the file or folder to recover.
 
         Returns:
-            str | IO:
-                - If the path corresponds to a folder (eg: Mirax folder), returns the absolute path of the folder (str).
-                - Otherwise, returns a file object opened in binary (IO) mode.
+            IO:
     """
     storage = __get_storage(storage_name)
-    folder_path = os.path.join(storage.location, filename)
-    if os.path.isdir(folder_path):
-        return folder_path 
-    else:
-        file = storage.open(filename, 'rb')
-        return file
+    file = storage.open(filename, 'rb')
+    return file
 
 
 def is_file_exists(storage_name: str, filename: str) -> bool:

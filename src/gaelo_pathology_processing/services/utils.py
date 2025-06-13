@@ -1,4 +1,4 @@
-import json
+import json, zipfile
 from pathlib import Path
 from openslide import (OpenSlide)
 from isyntax import ISyntax
@@ -26,7 +26,15 @@ def get_wsi_format(path : Path) ->str|None :
     try:
         format = OpenSlide.detect_format(path)
         if format is None:
-            if is_isyntax(Path(path)):
+            #If zip check if it contains a mrxs file
+            if zipfile.is_zipfile(path):
+                with zipfile.ZipFile(path, 'r') as zip_ref:
+                    files = zip_ref.namelist()
+                    for file in files:
+                        if(file.lower().endswith('.mrxs')):
+                            return 'mirax'
+            #else check if is a philips file
+            elif is_isyntax(Path(path)):
                 format = 'isyntax'
         return format
     except Exception:
