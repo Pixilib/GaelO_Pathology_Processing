@@ -1,8 +1,11 @@
 import os
 import json
-import tempfile
+import shutil
+import tempfile, zipfile
 import subprocess
 from abc import ABC, abstractmethod
+from openslide import OpenSlide
+from pydicom import Dataset
 from pydicom.uid import generate_uid
 
 from wsidicomizer.metadata import WsiDicomizerMetadata
@@ -13,7 +16,7 @@ from wsidicom.metadata import (
     Series,
     Study,
 )
-from wsidicom.codec import JpegSettings, Subsampling
+from wsidicom.codec import JpegSettings, Subsampling, JpegLosslessSettings
 from gaelo_pathology_processing.services.utils import get_wsi_format
 
 
@@ -21,8 +24,11 @@ class AbstractDicomizer(ABC):
 
     @classmethod
     def get_dicomizer(cls, image_path: str):
+       
         image_format = get_wsi_format(image_path)
-        if image_format == 'aperio' or image_format == 'leica' or image_format == 'isyntax':
+        print(f"Detected image format: {image_format}")
+        if image_format == 'leica' or image_format == 'isyntax':
+            print(f"Using BigPictureDicomizer for {image_format} format.")
             big_picture = BigPictureDicomizer()
             return big_picture
         else:
@@ -31,7 +37,26 @@ class AbstractDicomizer(ABC):
 
     def convert(self, study_instance_uid, metadata, image_path, output_path): 
         self.initialize_dicoms_tags(study_instance_uid, metadata)
-        self.convert_to_dicom(image_path, output_path)
+        
+        if zipfile.is_zipfile(image_path):
+            temp_dir = tempfile.mkdtemp()
+            try:
+                with zipfile.ZipFile(image_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+                # Cherche le fichier compatible OpenSlide dans le dossier extrait
+                slide_file = None
+                for f in os.listdir(temp_dir):
+                    file_path = os.path.join(temp_dir, f)
+                    if os.path.isfile(file_path) and OpenSlide.detect_format(file_path) is not None:
+                        slide_file = file_path
+                        break
+                if not slide_file:
+                    raise ValueError("Aucun fichier compatible OpenSlide trouvé dans l'archive zip.")
+                self.convert_to_dicom(slide_file, output_path)
+            finally:
+                shutil.rmtree(temp_dir)
+        else:
+            self.convert_to_dicom(image_path, output_path)
 
     @abstractmethod
     def convert_to_dicom(self, image_path :str, output_path :str):
@@ -81,7 +106,8 @@ class OrthancDicomizer(AbstractDicomizer):
             str(output_path),
             "--force-openslide", "1",
             "--max-size=10",
-            "--levels=6"
+            "--levels=6",
+            "--smooth=1"
         ]
 
         try:
@@ -142,6 +168,20 @@ class BigPictureDicomizer(AbstractDicomizer):
             encoding_settings = JpegSettings(
                 quality=100, subsampling=subsampling
             )
+            #encoding_settings = JpegLosslessSettings()
+        
+            # Déterminer les paramètres pour les niveaux en fonction des propriétés du WSI
+            with WsiDicomizer.open(image_path, self.wsi_metadata) as wsi:
+                total_levels = len(wsi.levels)
+                print(f"Total levels in WSI: {total_levels}")
+                if total_levels < 6:
+                    # If less than 6 levels, add the missing ones to reach 6 levels (0-5)
+                    add_missing_levels_param = True
+                    include_levels_param = list(range(6)) 
+                else:  # total_levels >= 6
+                    # If 6 or more levels, take the first 6 levels
+                    add_missing_levels_param = False
+                    include_levels_param = list(range(6))
         
             WsiDicomizer.convert(
                 filepath= image_path,
@@ -152,8 +192,9 @@ class BigPictureDicomizer(AbstractDicomizer):
                 include_overview=False,
                 include_thumbnail=False,
                 include_confidential=True,
-                add_missing_levels=True,
-                include_levels=[0, 1, 2, 3, 4, 5],
+                add_missing_levels=add_missing_levels_param,
+                include_levels=include_levels_param,
+                
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
@@ -172,11 +213,17 @@ class BigPictureDicomizer(AbstractDicomizer):
             manufacturer=data.get('Manufacturer')
         )
 
+        # series_extra_tags_dataset = Dataset()
+        # series_description = data.get('SeriesDescription', '')
+        # if series_description:
+        #     series_extra_tags_dataset.SeriesDescription = series_description
+
         metadata = WsiDicomizerMetadata(
             study=study,
             series=series,
             patient=patient,
             equipment=equipment,
+            #merge=[series_extra_tags_dataset] if series_extra_tags_dataset else None
         )
 
         self.wsi_metadata = metadata
