@@ -175,11 +175,11 @@ class BigPictureDicomizer(AbstractDicomizer):
                 total_levels = len(wsi.levels)
                 print(f"Total levels in WSI: {total_levels}")
                 if total_levels < 6:
-                    # Si moins de 6 niveaux, ajouter les manquants pour atteindre 6 niveaux (0-5)
+                    # If less than 6 levels, add the missing ones to reach 6 levels (0-5)
                     add_missing_levels_param = True
                     include_levels_param = list(range(6)) 
                 else:  # total_levels >= 6
-                    # Si 6 niveaux ou plus, prendre les 6 premiers niveaux
+                    # If 6 or more levels, take the first 6 levels
                     add_missing_levels_param = False
                     include_levels_param = list(range(6))
         
