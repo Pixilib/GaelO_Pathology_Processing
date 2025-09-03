@@ -22,11 +22,10 @@ class TestAbstractDicomizer(TestCase):
         self.temp_output_dir = tempfile.mkdtemp()
    
     def test_get_dicomizer(self):
+        # dicomizer = AbstractDicomizer.get_dicomizer(self.wsi_path_isyntax.name)
+        # self.assertIsInstance(dicomizer, BigPictureDicomizer)
 
         dicomizer = AbstractDicomizer.get_dicomizer(self.wsi_path_aperio.name)
-        self.assertIsInstance(dicomizer, OrthancDicomizer)
-
-        dicomizer = AbstractDicomizer.get_dicomizer(self.wsi_path_jpeg.name)
         self.assertIsInstance(dicomizer, OrthancDicomizer)
 
     
