@@ -1,17 +1,13 @@
 from pathlib import Path
-import shutil
 import tempfile
-import zipfile
-import os
-from openslide import (OpenSlide)
 from django.http import FileResponse
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gaelo_pathology_processing.services.utils import get_wsi_format
-from ...exceptions import GaelONotFoundException
 from gaelo_pathology_processing.services.file_helper import get_file, move_to_storage, get_hash, is_file_exists, delete_file
+from gaelo_pathology_processing.exceptions import GaelONotFoundException
 
 
 class WsiView(APIView):
@@ -30,7 +26,7 @@ class WsiView(APIView):
                 file_hash = get_hash(temp_file.name)
                 move_to_storage('wsi', temp_file.name, file_hash)
                 return Response({'id': file_hash}, status=200)
-            
+
         except Exception as e:
             return Response({'error': f'{str(e)}'}, status=500)
 
@@ -44,9 +40,8 @@ class WsiView(APIView):
             return response
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-        
 
-    def delete(self, request : Request, id : str):
+    def delete(self, request: Request, id: str):
         if not is_file_exists('wsi', id):
             raise GaelONotFoundException("File doesn't exist")
         delete_file('wsi', id)

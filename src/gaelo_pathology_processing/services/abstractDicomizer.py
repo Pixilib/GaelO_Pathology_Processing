@@ -28,7 +28,6 @@ class AbstractDicomizer(ABC):
         image_format = get_wsi_format(image_path)
         print(f"Detected image format: {image_format}")
         if image_format == 'leica' or image_format == 'isyntax':
-            print(f"Using BigPictureDicomizer for {image_format} format.")
             big_picture = BigPictureDicomizer()
             return big_picture
         else:
@@ -43,7 +42,7 @@ class AbstractDicomizer(ABC):
             try:
                 with zipfile.ZipFile(image_path, 'r') as zip_ref:
                     zip_ref.extractall(temp_dir)
-                # Cherche le fichier compatible OpenSlide dans le dossier extrait
+                # Search for file to open with OpenSlide in the extracted files (some format has splits in part files)
                 slide_file = None
                 for f in os.listdir(temp_dir):
                     file_path = os.path.join(temp_dir, f)
@@ -51,7 +50,7 @@ class AbstractDicomizer(ABC):
                         slide_file = file_path
                         break
                 if not slide_file:
-                    raise ValueError("Aucun fichier compatible OpenSlide trouvé dans l'archive zip.")
+                    raise ValueError("No file compatible with OpenSlide found in the zip archive.")
                 self.convert_to_dicom(slide_file, output_path)
             finally:
                 shutil.rmtree(temp_dir)

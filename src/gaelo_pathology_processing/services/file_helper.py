@@ -1,6 +1,4 @@
 import hashlib
-from typing import IO
-import os
 from django.core.files.storage import storages, Storage
 from django.core.files.base import ContentFile
 
