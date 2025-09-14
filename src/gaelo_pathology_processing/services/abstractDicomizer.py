@@ -1,7 +1,8 @@
 import os
 import json
 import shutil
-import tempfile, zipfile
+import tempfile
+import zipfile
 import subprocess
 from abc import ABC, abstractmethod
 from openslide import OpenSlide
@@ -24,7 +25,7 @@ class AbstractDicomizer(ABC):
 
     @classmethod
     def get_dicomizer(cls, image_path: str):
-       
+
         image_format = get_wsi_format(image_path)
         print(f"Detected image format: {image_format}")
         if image_format == 'leica' or image_format == 'isyntax':
@@ -34,9 +35,9 @@ class AbstractDicomizer(ABC):
             orthanc = OrthancDicomizer()
             return orthanc
 
-    def convert(self, study_instance_uid, metadata, image_path, output_path): 
+    def convert(self, study_instance_uid, metadata, image_path, output_path):
         self.initialize_dicoms_tags(study_instance_uid, metadata)
-        
+
         if zipfile.is_zipfile(image_path):
             temp_dir = tempfile.mkdtemp()
             try:
@@ -50,7 +51,8 @@ class AbstractDicomizer(ABC):
                         slide_file = file_path
                         break
                 if not slide_file:
-                    raise ValueError("No file compatible with OpenSlide found in the zip archive.")
+                    raise ValueError(
+                        "No file compatible with OpenSlide found in the zip archive.")
                 self.convert_to_dicom(slide_file, output_path)
             finally:
                 shutil.rmtree(temp_dir)
@@ -58,11 +60,11 @@ class AbstractDicomizer(ABC):
             self.convert_to_dicom(image_path, output_path)
 
     @abstractmethod
-    def convert_to_dicom(self, image_path :str, output_path :str):
+    def convert_to_dicom(self, image_path: str, output_path: str):
         pass
 
     @abstractmethod
-    def initialize_dicoms_tags(self, study_instance_uid :str, metadata :dict):
+    def initialize_dicoms_tags(self, study_instance_uid: str, metadata: dict):
         pass
 
 
@@ -88,9 +90,9 @@ class OrthancDicomizer(AbstractDicomizer):
                 dataset_path (str): Path of the dataset.json for the dicoms tags
         """
         executable_path = os.path.join(os.path.dirname(
-            __file__), '..', '..', '..', 'lib', 'OrthancWSIDicomizer')
+            __file__), '..', 'lib', 'OrthancWSIDicomizer')
         openslide_path = os.path.join(os.path.dirname(
-            __file__), '..', '..', '..', 'lib', 'libopenslide.so.1')
+            __file__), '..', 'lib', 'libopenslide.so.1')
 
         metadata_path = self.write_json_file(self.wsi_metadata)
 
@@ -114,7 +116,7 @@ class OrthancDicomizer(AbstractDicomizer):
         except subprocess.CalledProcessError as e:
             raise Exception(f"Error converting to DICOM : {e}")
 
-    def initialize_dicoms_tags(self, study_instance_uid :str, data :dict):
+    def initialize_dicoms_tags(self, study_instance_uid: str, data: dict):
         """Initialize the DICOM tags dataset."""
 
         if not isinstance(data, dict):  # Vérifie si 'data' est un dictionnaire
@@ -150,7 +152,7 @@ class BigPictureDicomizer(AbstractDicomizer):
 
     wsi_metadata: WsiDicomizerMetadata
 
-    def convert_to_dicom(self, image_path :str, output_path :str):
+    def convert_to_dicom(self, image_path: str, output_path: str):
         """
             Converts an image to a DICOM file using big_picture.
             Args:
@@ -167,8 +169,8 @@ class BigPictureDicomizer(AbstractDicomizer):
             encoding_settings = JpegSettings(
                 quality=100, subsampling=subsampling
             )
-            #encoding_settings = JpegLosslessSettings()
-        
+            # encoding_settings = JpegLosslessSettings()
+
             # Déterminer les paramètres pour les niveaux en fonction des propriétés du WSI
             with WsiDicomizer.open(image_path, self.wsi_metadata) as wsi:
                 total_levels = len(wsi.levels)
@@ -176,29 +178,29 @@ class BigPictureDicomizer(AbstractDicomizer):
                 if total_levels < 6:
                     # If less than 6 levels, add the missing ones to reach 6 levels (0-5)
                     add_missing_levels_param = True
-                    include_levels_param = list(range(6)) 
+                    include_levels_param = list(range(6))
                 else:  # total_levels >= 6
                     # If 6 or more levels, take the first 6 levels
                     add_missing_levels_param = False
                     include_levels_param = list(range(6))
-        
+
             WsiDicomizer.convert(
-                filepath= image_path,
-                output_path= output_path,
-                metadata = self.wsi_metadata,
-                encoding = encoding_settings,
+                filepath=image_path,
+                output_path=output_path,
+                metadata=self.wsi_metadata,
+                encoding=encoding_settings,
                 include_label=False,
                 include_overview=False,
                 include_thumbnail=False,
                 include_confidential=True,
                 add_missing_levels=add_missing_levels_param,
                 include_levels=include_levels_param,
-                
+
             )
         except Exception as e:
             raise Exception(f"Error converting to DICOM : {e}")
 
-    def initialize_dicoms_tags(self, study_instance_uid :str, data :dict) -> WsiDicomizerMetadata:
+    def initialize_dicoms_tags(self, study_instance_uid: str, data: dict) -> WsiDicomizerMetadata:
         """Initialize the DICOM tags dataset for Big Picture dicomizer."""
         if not isinstance(data, dict):
             raise ValueError(
@@ -222,7 +224,7 @@ class BigPictureDicomizer(AbstractDicomizer):
             series=series,
             patient=patient,
             equipment=equipment,
-            #merge=[series_extra_tags_dataset] if series_extra_tags_dataset else None
+            # merge=[series_extra_tags_dataset] if series_extra_tags_dataset else None
         )
 
         self.wsi_metadata = metadata
