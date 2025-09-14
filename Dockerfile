@@ -16,7 +16,7 @@ WORKDIR $DockerHOME
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1  
 
-COPY ./src $DockerHOME 
+COPY ./src $DockerHOME
 COPY ./start-prod-server.sh /usr/local/bin/start-prod-server.sh
 RUN chmod +x /usr/local/bin/start-prod-server.sh
 

@@ -33,6 +33,7 @@ SECRET_KEY = 'django-insecure-#bt8p^+k4huw!rt0zp!k-6lklj7!zr)i7)v4ih4s)yk7-$$yqt
 DEBUG = env('DEBEUG', str, 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
+APPEND_SLASH=False
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
