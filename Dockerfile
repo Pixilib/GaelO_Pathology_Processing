@@ -1,5 +1,5 @@
 # base image  
-FROM python:3.12
+FROM python:3.12.9-bookworm
 
 # setup environment variable  
 ENV DockerHOME=/home/gaelo_pathology_processing
