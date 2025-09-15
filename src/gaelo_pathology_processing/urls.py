@@ -19,9 +19,9 @@ from .controller import *
 
 urlpatterns = [
     path("", WelcomeView.as_view()),
-    path("wsi/", WsiView.as_view()),
-    path('wsi/<str:id>/', WsiView.as_view()),
-    path('dicom/<str:id>/', DicomView.as_view()),
-    path('tools/conversion/', ConvertToDicomView.as_view()),
+    path("wsi", WsiView.as_view()),
+    path('wsi/<str:id>', WsiView.as_view()),
+    path('dicom/<str:id>', DicomView.as_view()),
+    path('tools/conversion', ConvertToDicomView.as_view()),
     path('wsi/<str:id>/metadata', WsiMetadata.as_view() )
 ]
