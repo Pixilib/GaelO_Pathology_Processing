@@ -21,7 +21,7 @@ class TestWsi(TestCase):
         for file_path in file_paths:
             with open(file_path, "rb") as image:
                 response = self.client.post(
-                    "/wsi/",
+                    "/wsi",
                     image.read(),
                     content_type='application/octet-stream'
                 )

@@ -78,7 +78,7 @@ class TestConvertToDicom(TestCase):
         #                 'd762ed9e13d4c47549672a54777f40e3') #isyntax 
 
         response = self.client.post(
-            "/tools/conversion/", self.valid_payload, content_type="application/json")
+            "/tools/conversion", self.valid_payload, content_type="application/json")
 
         self.assertEqual(response.status_code, 200)
 
